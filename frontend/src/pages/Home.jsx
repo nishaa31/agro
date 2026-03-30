@@ -32,13 +32,18 @@ function Home() {
   }, []);
 
   return (
-    <div style={{ paddingLeft: "260px", padding: "40px" }}>
+    <div
+  style={{
+    minHeight: "100vh",
+    padding: "40px",
+  }}
+>
       
       {/* ================= HERO SECTION ================= */}
       <div
         style={{
           display: "flex",
-          gap: "40px",
+          gap: "100px",
           padding: "50px",
           borderRadius: "28px",
           background: "linear-gradient(120deg,#0b1f1a,#1f4037)",

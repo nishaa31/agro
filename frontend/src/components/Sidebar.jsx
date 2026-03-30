@@ -46,7 +46,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
         }}
       >
         {isOpen && (
-          <h2 style={{ fontWeight: "700", letterSpacing: "1px" }}>
+          <h2 style={{ fontWeight: "700" }}>
             Agro<span style={{ color: "#a8bfa0" }}>Pesto</span>
           </h2>
         )}
@@ -56,105 +56,30 @@ function Sidebar({ isOpen, toggleSidebar }) {
         </div>
       </div>
 
-      {/* MENU ITEMS */}
-      <div className="sidebar"> 
-        <div className="sidebar-top">
-      <MenuItem
-        icon={<Home />}
-        text="Home"
-        showText={isOpen}
-        active={isActive("/")}
-        onClick={() => navigate("/")}
-      />
-
-      <MenuItem
-        icon={<Leaf />}
-        text="Disease Detection"
-        showText={isOpen}
-        active={isActive("/disease")}
-        onClick={() => navigate("/disease")}
-      />
-
-      <MenuItem
-        icon={<Sprout />}
-        text="Yield Impact"
-        showText={isOpen}
-        active={isActive("/yield")}
-        onClick={() => navigate("/yield")}
-      />
-
-      <MenuItem
-        icon={<BarChart3 />}
-        text="Insights"
-        showText={isOpen}
-        active={isActive("/insights")}
-        onClick={() => navigate("/insights")}
-      />
-
-      <MenuItem
-        icon={<BarChart2 />}
-        text="Regression"
-        showText={isOpen}
-        active={isActive("/regression")}
-        onClick={() => navigate("/regression")}
-      />
-
-      <MenuItem
-        icon={<Clock />}
-        text="Time Series"
-        showText={isOpen}
-        active={isActive("/timeseries")}
-        onClick={() => navigate("/timeseries")}
-      />
+      {/* 🔥 TOP MENU */}
+      <div style={{ flex: 1 }}>
+        <MenuItem icon={<Home />} text="Home" showText={isOpen} active={isActive("/home")} onClick={() => navigate("/home")} />
+        <MenuItem icon={<Leaf />} text="Disease Detection" showText={isOpen} active={isActive("/disease")} onClick={() => navigate("/disease")} />
+        <MenuItem icon={<Sprout />} text="Yield Impact" showText={isOpen} active={isActive("/yield")} onClick={() => navigate("/yield")} />
+        <MenuItem icon={<BarChart3 />} text="Insights" showText={isOpen} active={isActive("/insights")} onClick={() => navigate("/insights")} />
+        <MenuItem icon={<BarChart2 />} text="Regression" showText={isOpen} active={isActive("/regression")} onClick={() => navigate("/regression")} />
+        <MenuItem icon={<Clock />} text="Time Series" showText={isOpen} active={isActive("/timeseries")} onClick={() => navigate("/timeseries")} />
       </div>
-      <div className="sidebar-bottom">
-      <MenuItem
-  icon={<User />}
-  text="Profile"
-  showText={isOpen}
-  onClick={() => navigate("/profile")}
-/>
 
-<MenuItem
-  icon={<LogOut />}
-  text="Logout"
-  showText={isOpen}
-  onClick={() => {
-    localStorage.removeItem("agropestro_user");
-    navigate("/login");
-  }}
-/>
-</div>
-</div>
-
-      {/* USER */}
-      {isOpen && (
-        <div
-          style={{
-            marginTop: "auto",
-            padding: "20px",
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
+      {/* 🔥 BOTTOM MENU */}
+      <div style={{ marginBottom: "20px" }}>
+        <MenuItem icon={<User />} text="Profile" showText={isOpen} onClick={() => navigate("/profile")} />
+        <MenuItem
+          icon={<LogOut />}
+          text="Logout"
+          showText={isOpen}
+          onClick={() => {
+            localStorage.removeItem("agropestro_user");
+            navigate("/login");
           }}
-        >
-          <div
-            style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "50%",
-              backgroundColor: "#a8bfa0",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#0b1f1a",
-              fontWeight: "bold",
-            }}
-          >
-          
-          </div>
-        </div>
-      )}
+        />
+      </div>
+
     </div>
   );
 }
@@ -175,7 +100,6 @@ function MenuItem({ icon, text, onClick, active, showText }) {
           ? "linear-gradient(90deg,#a8bfa0,#6f8f7a)"
           : "transparent",
         color: active ? "#0b1f1a" : "#e6e3db",
-        transition: "0.3s",
       }}
     >
       {icon}
