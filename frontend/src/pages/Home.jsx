@@ -35,7 +35,7 @@ function Home() {
     <div
   style={{
     minHeight: "100vh",
-    padding: "40px",
+    padding: "0px",
   }}
 >
       
@@ -43,8 +43,8 @@ function Home() {
       <div
         style={{
           display: "flex",
-          gap: "100px",
-          padding: "50px",
+          gap: "40px",
+          padding: "30px",
           borderRadius: "28px",
           background: "linear-gradient(120deg,#0b1f1a,#1f4037)",
           color: "#e6e3db",

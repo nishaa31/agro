@@ -29,7 +29,6 @@ const YieldImpact = () => {
 
     setLoading(true);
     setError(null);
-    setResult(null);
 
     try {
 
@@ -51,8 +50,9 @@ const YieldImpact = () => {
       const data = await response.json();
 
       setResult({
-        fertilizer: data.recommendation,
-        loss: data.yield_loss
+        fertilizer: data.fertilizer,
+        loss: data.yield_loss,
+        status: data.status
       });
 
     } catch (err) {
@@ -188,9 +188,13 @@ const YieldImpact = () => {
             </p>
 
             <p style={{ marginTop: "10px" }}>
-              <strong>Recommended Fertilizer:</strong> {result.fertilizer}
+             <strong>Recommended Fertilizer:</strong>{" "}
+             {result?.fertilizer || "No recommendation"}
             </p>
-
+            <p style={{ marginTop: "10px" }}>
+  <strong>Risk Level:</strong>{" "}
+  {result?.status || "N/A"}
+</p>
           </div>
 
         )}

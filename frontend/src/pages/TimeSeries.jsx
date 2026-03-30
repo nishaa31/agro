@@ -40,15 +40,13 @@ function TimeSeriesForecast() {
               .split("T")[0]
           : endDate;
 
-      const res = await api.get("/predict/timeseries", {
-        params: {
+      const res = await api.post("/predict/timeseries", {
           start_date: startDate,
           end_date: adjustedEndDate,
-        },
       });
 
 
-      const values = res.data?.Predicted_Values;
+      const values = res.data.predicted_yield;
 
       // 👉 SAFETY CHECK
       if (!Array.isArray(values)) {

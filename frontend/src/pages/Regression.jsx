@@ -29,20 +29,24 @@ function Regression() {
     setResult(null);
 
     try {
-      const res = await api.post("/predict/regression", {
-        ...formData,
-        Soil_pH: Number(formData.Soil_pH),
-        Temperature: Number(formData.Temperature),
-        Humidity: Number(formData.Humidity),
-        Wind_Speed: Number(formData.Wind_Speed),
-        N: Number(formData.N),
-        P: Number(formData.P),
-        K: Number(formData.K),
-        Soil_Quality: Number(formData.Soil_Quality),
-      });
+      const res = await api.post("/predict/yield", {
+        crop_type: formData.Crop_Type,
+      soil_type: formData.Soil_Type,
+      soil_ph: parseFloat(formData.Soil_pH),
+      temperature: parseFloat(formData.Temperature),
+      humidity: parseFloat(formData.Humidity),
+      wind_speed: parseFloat(formData.Wind_Speed),
+      n: parseFloat(formData.N),
+      p: parseFloat(formData.P),
+      k: parseFloat(formData.K),
+      soil_quality: parseFloat(formData.Soil_Quality),
+    });
 
-      setResult(res.data.Predicted_Yield.toFixed(2));
+      console.log(res.data);
+
+      setResult(res.data.predicted_yield);
     } catch (err) {
+      console.error("FULL ERROR:", err.response?.data);
       alert("Prediction failed. Check inputs / backend.");
     } finally {
       setLoading(false);

@@ -2,6 +2,7 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
+from datetime import date, timedelta
 
 import torch
 import torch.nn as nn
@@ -21,7 +22,7 @@ DISEASE_MODEL_PATH  = "ml_models/disease_model.pth"
 YIELD_MODEL_PATH    = "ml_models/yield_model.pkl"
 YIELD_ENCODER_PATH  = "ml_models/label_encoders.pkl"
 YIELD_META_PATH     = "ml_models/model_meta.json"
-
+TIME_SERIES_MODEL_PATH = "ml_models/time_series_model.pkl"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Globals
@@ -32,7 +33,7 @@ disease_img_size = 224
 yield_rf_model   = None
 yield_encoders   = None
 yield_meta       = None
-
+time_series_model = None
 
 # ─────────────────────────────────────────
 # LOAD MODELS
@@ -84,11 +85,21 @@ def load_yield_model():
     with open(YIELD_META_PATH) as f:
         yield_meta = json.load(f)
 
+def load_time_series_model():
+    global time_series_model
+
+    if not os.path.exists(TIME_SERIES_MODEL_PATH):
+        print("❌ time series model not found")
+        return
+
+    print("✅ Loading time series model...")
+    time_series_model = joblib.load(TIME_SERIES_MODEL_PATH)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     load_disease_model()
     load_yield_model()
+    load_time_series_model()
     yield
 
 
@@ -240,4 +251,76 @@ def predict_yield(data: YieldInput):
     return {
         "predicted_yield": round(pred, 2),
         "unit": "tonnes/hectare"
+    }
+
+class TimeSeriesInput(BaseModel):
+    start_date: date
+    end_date: date
+
+@app.post("/predict/timeseries")
+def predict_timeseries(data: TimeSeriesInput):
+
+    if time_series_model is None:
+        raise HTTPException(500, "Time series model not loaded")
+
+    if data.start_date > data.end_date:
+        raise HTTPException(400, "Invalid date range")
+
+    dates = []
+    current = data.start_date
+
+    while current <= data.end_date:
+        dates.append(current)
+        current += timedelta(days=1)
+
+    steps = len(dates)
+    preds = time_series_model.forecast(steps=steps)
+
+    return {
+        "dates": [str(d) for d in dates],
+        "predicted_yield": [float(p) for p in preds]
+    }
+
+class ImpactInput(BaseModel):
+    soil_type: str
+    temperature: float
+    humidity: float
+
+
+@app.post("/predict/impact")
+def predict_impact(data: ImpactInput):
+
+    # 🔥 SIMPLE LOGIC (demo + realistic)
+    impact = 0
+
+    # temperature effect
+    if data.temperature > 35:
+        impact += 20
+    elif data.temperature < 15:
+        impact += 10
+
+    # humidity effect
+    if data.humidity > 80:
+        impact += 25
+    elif data.humidity < 30:
+        impact += 10
+
+    # soil effect
+    if data.soil_type.lower() == "sandy":
+        impact += 15
+    elif data.soil_type.lower() == "loamy":
+        impact += 5
+
+    # fertilizer suggestion
+    if impact > 40:
+        fertilizer = "High Nitrogen Fertilizer (Urea)"
+    elif impact > 20:
+        fertilizer = "Balanced NPK Fertilizer"
+    else:
+        fertilizer = "Organic Compost Recommended"
+
+    return {
+        "yield_loss": impact,
+        "fertilizer": fertilizer,
+        "status": "High Risk" if impact > 40 else "Moderate" if impact > 20 else "Low Risk"
     }
