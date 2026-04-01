@@ -1,19 +1,22 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
 from datetime import date, timedelta
-
-import torch
-import torch.nn as nn
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from torchvision import models, transforms
 from PIL import Image
+from fastapi import Form
 
 import joblib
 import json
 import numpy as np
 import io
 import os
+import torch
+import torch.nn as nn
+import shutil
 
 # ─────────────────────────────────────────
 # CONFIG
@@ -23,6 +26,7 @@ YIELD_MODEL_PATH    = "ml_models/yield_model.pkl"
 YIELD_ENCODER_PATH  = "ml_models/label_encoders.pkl"
 YIELD_META_PATH     = "ml_models/model_meta.json"
 TIME_SERIES_MODEL_PATH = "ml_models/time_series_model.pkl"
+DATABASE_URL = "sqlite:///./agropestro.db"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Globals
@@ -35,55 +39,60 @@ yield_encoders   = None
 yield_meta       = None
 time_series_model = None
 
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(bind=engine)
+Base = declarative_base()
+
 # ─────────────────────────────────────────
 # LOAD MODELS
 # ─────────────────────────────────────────
 def load_disease_model():
     global disease_model, disease_classes, disease_img_size
 
-    if not os.path.exists(DISEASE_MODEL_PATH):
-        print("❌ disease_model not found")
-        return
+    try:
+        print("Loading disease model...")
 
-    print("✅ Loading disease model...")
+        ckpt = torch.load(DISEASE_MODEL_PATH, map_location=DEVICE)
 
-    ckpt = torch.load(DISEASE_MODEL_PATH, map_location=DEVICE)
+        disease_classes = ckpt["classes"]
+        disease_img_size = ckpt.get("img_size", 224)
 
-    disease_classes  = ckpt["classes"]
-    disease_img_size = ckpt.get("img_size", 224)
-    num_classes      = len(disease_classes)
+        base = models.resnet50(weights=None)
+        base.fc = nn.Sequential(
+            nn.Dropout(0.5),
+            nn.Linear(base.fc.in_features, 512),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(512, len(disease_classes))
+        )
 
-    base = models.resnet50(weights=None)
-    base.fc = nn.Sequential(
-        nn.Dropout(0.5),
-        nn.Linear(base.fc.in_features, 512),
-        nn.ReLU(),
-        nn.Dropout(0.3),
-        nn.Linear(512, num_classes)
-    )
+        base.load_state_dict(ckpt["model_state_dict"])
+        base.to(DEVICE).eval()
 
-    base.load_state_dict(ckpt["model_state_dict"])
-    base.to(DEVICE).eval()
+        disease_model = base
 
-    disease_model = base
+        print("✅ Disease model loaded")
 
-    print(f"🔥 Disease model ready → {disease_classes}")
+    except Exception as e:
+        print("❌ Disease model error:", e)
 
 
 def load_yield_model():
     global yield_rf_model, yield_encoders, yield_meta
 
-    if not os.path.exists(YIELD_MODEL_PATH):
-        print("❌ yield_model not found")
-        return
+    try:
+        print("Loading yield model...")
 
-    print("✅ Loading yield model...")
+        yield_rf_model = joblib.load(YIELD_MODEL_PATH)
+        yield_encoders = joblib.load(YIELD_ENCODER_PATH)
 
-    yield_rf_model = joblib.load(YIELD_MODEL_PATH)
-    yield_encoders = joblib.load(YIELD_ENCODER_PATH)
+        with open(YIELD_META_PATH) as f:
+            yield_meta = json.load(f)
 
-    with open(YIELD_META_PATH) as f:
-        yield_meta = json.load(f)
+        print("✅ Yield model loaded")
+
+    except Exception as e:
+        print("❌ Yield model error:", e)
 
 def load_time_series_model():
     global time_series_model
@@ -94,6 +103,33 @@ def load_time_series_model():
 
     print("✅ Loading time series model...")
     time_series_model = joblib.load(TIME_SERIES_MODEL_PATH)
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    phone = Column(String)
+    location = Column(String)
+
+
+class History(Base):
+    __tablename__ = "history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer)
+    disease = Column(String)
+    confidence = Column(String)
+    date = Column(String)
+
+Base.metadata.create_all(bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -147,14 +183,11 @@ def root():
 # DISEASE PREDICTION (FINAL)
 # ─────────────────────────────────────────
 @app.post("/predict/disease")
-async def predict_disease(file: UploadFile = File(...)):
-
-    if disease_model is None:
-        raise HTTPException(500, "Model not loaded")
-
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(400, "Upload image file")
-
+async def predict_disease(
+    user_id: int = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
 
@@ -175,7 +208,20 @@ async def predict_disease(file: UploadFile = File(...)):
     disease = disease_classes[top_idx]
     confidence = float(probs[top_idx])
 
-    # 🔥 REAL AI LOGIC
+    # 🔥 SAVE HISTORY (INSIDE FUNCTION)
+    from datetime import datetime
+
+    history = History(
+        user_id=user_id,
+        disease=disease,
+        confidence=str(round(confidence, 3)),
+        date=str(datetime.now())
+    )
+
+    db.add(history)
+    db.commit()
+
+    # 🔥 AI LOGIC
     if confidence > 0.75:
         severity = "High"
     elif confidence > 0.4:
@@ -187,7 +233,6 @@ async def predict_disease(file: UploadFile = File(...)):
 
     explanation = f"The model is {round(confidence*100,2)}% confident that the crop has {disease.replace('_',' ')}."
 
-    # top 5 predictions
     all_predictions = sorted(
         [{"disease": c, "confidence": round(float(p), 3)}
          for c, p in zip(disease_classes, probs)],
@@ -324,3 +369,78 @@ def predict_impact(data: ImpactInput):
         "fertilizer": fertilizer,
         "status": "High Risk" if impact > 40 else "Moderate" if impact > 20 else "Low Risk"
     }
+
+class LoginInput(BaseModel):
+    name: str
+    phone: str
+    location: str
+
+
+@app.post("/login")
+def login(data: LoginInput, db: Session = Depends(get_db)):
+
+    user = db.query(User).filter(User.phone == data.phone).first()
+
+    if user:
+        # 🔥 UPDATE EXISTING USER
+        user.name = data.name
+        user.location = data.location
+        db.commit()
+        db.refresh(user)
+
+    else:
+        # 🔥 CREATE NEW USER
+        user = User(
+            name=data.name,
+            phone=data.phone,
+            location=data.location
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    return {
+        "user_id": user.id,
+        "name": user.name,
+        "phone": user.phone,
+        "location": user.location
+    }
+
+@app.get("/profile/{user_id}")
+def get_profile(user_id: int, db: Session = Depends(get_db)):
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    history = db.query(History).filter(History.user_id == user_id).all()
+
+    return {
+        "user_id": user.id,
+        "name": user.name,
+        "phone": user.phone,
+        "location": user.location,
+        "history": [
+            {
+                "disease": h.disease,
+                "confidence": h.confidence,
+                "date": h.date
+            }
+            for h in history
+        ]
+    }
+
+@app.post("/upload/profile/{user_id}")
+def upload_profile(user_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+
+    file_path = f"uploads/{user_id}_{file.filename}"
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    user = db.query(User).filter(User.id == user_id).first()
+    user.profile_image = file_path
+    db.commit()
+
+    return {"message": "uploaded", "path": file_path}

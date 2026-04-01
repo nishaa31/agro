@@ -14,7 +14,7 @@ import TimeSeries from "./pages/TimeSeries";
 import Insights from "./pages/Insights";
 import Profile from "./pages/Profile";
 
-const isLoggedIn = () => localStorage.getItem("agropestro_user");
+const isLoggedIn = () => localStorage.getItem("userId");
 
 function Layout({ children }) {
   const [isOpen, setIsOpen] = useState(true);

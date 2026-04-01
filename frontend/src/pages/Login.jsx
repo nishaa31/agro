@@ -11,36 +11,53 @@ export default function Login() {
   const [location, setLocation] = useState('')
   const [error, setError]     = useState('')
 
-  const handleLogin = (e) => {
-    e.preventDefault()
-    setError('')
+const handleLogin = async (e) => {
+  e.preventDefault();
 
-    if (!phone || !password) {
-      setError('Phone number and password required da!')
-      return
-    }
-
-    // Save user to localStorage — replace with real API later
-    localStorage.setItem('agropestro_user', JSON.stringify({
-      name    : name || 'Farmer',
+  const res = await fetch("http://127.0.0.1:8000/login", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      name,
       phone,
-      location: location || 'Tamil Nadu',
-    }))
-    navigate('/home')
+      location
+    })
+  });
+
+  const data = await res.json();
+
+  localStorage.setItem("userId", data.user_id);
+  navigate("/home");
+};
+console.log(name, phone, location);
+
+ const handleRegister = async (e) => {
+  e.preventDefault();
+  setError('');
+
+  if (!name || !phone || !password || !location) {
+    setError('All fields required da!');
+    return;
   }
 
-  const handleRegister = (e) => {
-    e.preventDefault()
-    setError('')
+  const res = await fetch("http://127.0.0.1:8000/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name,
+      phone,
+      location,
+    }),
+  });
 
-    if (!name || !phone || !password) {
-      setError('All fields required da!')
-      return
-    }
+  const data = await res.json();
 
-    localStorage.setItem('agropestro_user', JSON.stringify({ name, phone, location }))
-    navigate('/')
-  }
+  localStorage.setItem("userId", data.user_id);
+
+  navigate("/home");
+};
 
   return (
     <div className="login-page">

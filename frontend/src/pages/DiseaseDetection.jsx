@@ -24,6 +24,8 @@ const DiseaseDetection = () => {
 
     const formData = new FormData();
     formData.append("file", imageFile);
+    const userId = localStorage.getItem("userId");
+    formData.append("user_id", userId);
 
     try {
       setLoading(true);
@@ -149,7 +151,7 @@ const DiseaseDetection = () => {
 
             {/* Disease */}
             <h3 style={{ marginTop: "10px" }}>
-              {result.disease.replace("_", " ").toUpperCase()}
+              {result?.disease?.replace("_", " ").toUpperCase()}
             </h3>
 
             {/* Confidence */}
