@@ -65,7 +65,7 @@ const YieldImpact = () => {
   return (
     <div
       style={{
-        backgroundColor: "#dfe5e2",
+        
         minHeight: "100vh",
         padding: "40px",
       }}
@@ -173,7 +173,6 @@ const YieldImpact = () => {
           <div
             style={{
               marginTop: "40px",
-              backgroundColor: "#d9dfd6",
               padding: "30px",
               borderRadius: "25px",
               color: "#0f2b24",

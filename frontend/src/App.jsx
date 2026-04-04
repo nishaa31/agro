@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useState } from "react";
 import Sidebar from "./components/Sidebar";
 import "./styles/layout.css";
@@ -16,30 +16,46 @@ import Profile from "./pages/Profile";
 
 const isLoggedIn = () => localStorage.getItem("userId");
 
-function Layout({ children }) {
+/* 🔥 MAIN LAYOUT */
+function Layout() {
   const [isOpen, setIsOpen] = useState(true);
+
+  const toggleSidebar = () => {
+    setIsOpen(!isOpen);
+  };
 
   return (
     <div className="app">
-      <Sidebar isOpen={isOpen} toggleSidebar={() => setIsOpen(!isOpen)} />
-      <div className="main">{children}</div>
+      <Sidebar isOpen={isOpen} toggleSidebar={toggleSidebar} />
+
+      <div
+        className="main"
+        style={{
+          marginLeft: isOpen ? "230px" : "80px",
+          transition: "0.3s ease"
+        }}
+      >
+        <Outlet /> {/* 🔥 THIS IS IMPORTANT */}
+      </div>
     </div>
   );
 }
 
-function Protected({ children }) {
+/* 🔐 PROTECTED ROUTE */
+function Protected() {
   if (!isLoggedIn()) {
     return <Navigate to="/login" replace />;
   }
-  return children;
+  return <Layout />;
 }
 
+/* 🚀 APP */
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* 🔥 ROOT LOGIC */}
+        {/* ROOT */}
         <Route
           path="/"
           element={
@@ -52,42 +68,20 @@ export default function App() {
         {/* LOGIN */}
         <Route path="/login" element={<Login />} />
 
-        {/* PROTECTED */}
-        <Route path="/home" element={
-          <Protected><Layout><Home /></Layout></Protected>
-        } />
+        {/* 🔥 PROTECTED ROUTES WITH LAYOUT */}
+        <Route element={<Protected />}>
 
-        <Route path="/disease" element={
-          <Protected><Layout><DiseaseDetection /></Layout></Protected>
-        } />
+          <Route path="/home" element={<Home />} />
+          <Route path="/disease" element={<DiseaseDetection />} />
+          <Route path="/yield" element={<YieldImpact />} />
+          <Route path="/weather" element={<Weather />} />
+          <Route path="/market" element={<Market />} />
+          <Route path="/regression" element={<Regression />} />
+          <Route path="/timeseries" element={<TimeSeries />} />
+          <Route path="/insights" element={<Insights />} />
+          <Route path="/profile" element={<Profile />} />
 
-        <Route path="/yield" element={
-          <Protected><Layout><YieldImpact /></Layout></Protected>
-        } />
-
-        <Route path="/weather" element={
-          <Protected><Layout><Weather /></Layout></Protected>
-        } />
-
-        <Route path="/market" element={
-          <Protected><Layout><Market /></Layout></Protected>
-        } />
-
-        <Route path="/regression" element={
-          <Protected><Layout><Regression /></Layout></Protected>
-        } />
-
-        <Route path="/timeseries" element={
-          <Protected><Layout><TimeSeries /></Layout></Protected>
-        } />
-
-<Route path="/insights" element={
-          <Protected><Layout><Insights /></Layout></Protected>
-        } />
-
-<Route path="/profile" element={
-          <Protected><Layout><Profile /></Layout></Protected>
-        } />
+        </Route>
 
       </Routes>
     </BrowserRouter>

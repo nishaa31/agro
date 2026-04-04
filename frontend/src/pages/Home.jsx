@@ -35,7 +35,7 @@ function Home() {
     <div
   style={{
     minHeight: "100vh",
-    padding: "0px",
+    padding: "20px",
   }}
 >
       
