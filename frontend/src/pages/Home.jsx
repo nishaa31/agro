@@ -1,228 +1,296 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Sprout, BarChart3, Clock } from "lucide-react";
-import ChatBotWidget from "../components/ChatBotWidget";
+import {
+  Menu,
+  Search,
+  Bell,
+  ChevronDown,
+  Sprout,
+  Activity,
+  Wheat,
+  BarChart3,
+  Clock3,
+  ArrowRight,
+  ScanLine,
+} from "lucide-react";
 
-// SLIDESHOW IMAGES
-import slide1 from "../assets/home/slide1.jpg";
-import slide2 from "../assets/home/slide2.jpg";
-import slide3 from "../assets/home/slide3.jpg";
-import slide4 from "../assets/home/slide4.jpg";
-import slide5 from "../assets/home/slide5.jpg";
+export default function Home() {
+  const stats = [
+    {
+      title: "Total Predictions",
+      value: "1,248",
+      growth: "↑ 18% this month",
+      icon: <Sprout size={24} />,
+      bg: "bg-green-100",
+      text: "text-green-700",
+    },
+    {
+      title: "Diseases Detected",
+      value: "15",
+      growth: "↑ 6 new this month",
+      icon: <Activity size={24} />,
+      bg: "bg-violet-100",
+      text: "text-violet-700",
+    },
+    {
+      title: "Yield Reports",
+      value: "320",
+      growth: "↑ 12% this month",
+      icon: <Wheat size={24} />,
+      bg: "bg-yellow-100",
+      text: "text-yellow-700",
+    },
+    {
+      title: "Model Accuracy",
+      value: "96%",
+      growth: "↑ 4% improved",
+      icon: <BarChart3 size={24} />,
+      bg: "bg-blue-100",
+      text: "text-blue-700",
+    },
+  ];
 
-import card1 from "../assets/home/in-card.jpg";
-import card2 from "../assets/home/reg-card.jpg";
-import card3 from "../assets/home/ts-card.jpg";
-
-
-function Home() {
-  const navigate = useNavigate();
-
-  // ✅ SLIDESHOW STATE
-  const slides = [slide1, slide2, slide3, slide4, slide5];
-  const [current, setCurrent] = useState(0);
-
-  // ✅ AUTO SLIDE EFFECT
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % slides.length);
-    }, 3000); // 3 sec
-
-    return () => clearInterval(interval);
-  }, []);
+  const modules = [
+    {
+      title: "Disease Detection",
+      desc: "Upload leaf image and detect diseases using AI model.",
+      icon: <ScanLine size={30} />,
+      bg: "bg-green-50",
+      iconBg: "bg-green-100",
+      iconText: "text-green-700",
+    },
+    {
+      title: "Yield Prediction",
+      desc: "Predict crop yield using environmental factors.",
+      icon: <BarChart3 size={30} />,
+      bg: "bg-blue-50",
+      iconBg: "bg-blue-100",
+      iconText: "text-blue-700",
+    },
+    {
+      title: "Time Series Forecast",
+      desc: "Forecast future crop yield using time-series analysis.",
+      icon: <Clock3 size={30} />,
+      bg: "bg-orange-50",
+      iconBg: "bg-orange-100",
+      iconText: "text-orange-700",
+    },
+  ];
 
   return (
-    <div
-  style={{
-    minHeight: "100vh",
-    padding: "20px",
-  }}
->
+    <div className="flex min-h-screen bg-[#f4f7f2]">
+      {/* SIDEBAR */}
       
-      {/* ================= HERO SECTION ================= */}
-      <div
-        style={{
-          display: "flex",
-          gap: "40px",
-          padding: "30px",
-          borderRadius: "28px",
-          background: "linear-gradient(120deg,#0b1f1a,#1f4037)",
-          color: "#e6e3db",
-          alignItems: "center",
-        }}
-      >
-        {/* LEFT TEXT */}
-        <div style={{ flex: 1 }}>
-          <h1 style={{ fontSize: "42px", marginBottom: "20px" }}>
-            Smart Crop Yield Intelligence
-          </h1>
 
-          <p style={{ color: "#a8bfa0", lineHeight: "1.6" }}>
-            AI-powered crop yield prediction and agricultural forecasting
-            platform to support smart farming decisions.
-          </p>
+      {/* MAIN CONTENT */}
+      <main className="flex-1 p-6">
+        {/* TOPBAR */}
+        <div className="flex flex-col gap-4 rounded-[28px] bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
+          {/* LEFT */}
+          <div className="flex items-center gap-4">
+            <button className="rounded-xl bg-gray-100 p-3">
+              <Menu size={22} />
+            </button>
 
-          <button
-            onClick={() => navigate("/regression")}
-            style={{
-              marginTop: "30px",
-              padding: "14px 30px",
-              background: "#e6e3db",
-              color: "#0b1f1a",
-              border: "none",
-              borderRadius: "14px",
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
-          >
-            Start Prediction
-          </button>
+            <h1 className="text-3xl font-bold text-gray-800">
+              Home
+            </h1>
+          </div>
+
+          {/* SEARCH */}
+          <div className="flex flex-1 items-center justify-center">
+            <div className="flex w-full max-w-xl items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+              <Search className="text-gray-500" size={20} />
+
+              <input
+                type="text"
+                placeholder="Search anything..."
+                className="w-full bg-transparent outline-none"
+              />
+            </div>
+          </div>
+
+          {/* PROFILE */}
+          <div className="flex items-center gap-5">
+            <button className="relative rounded-xl bg-gray-100 p-3">
+              <Bell size={20} />
+
+              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-xs text-white">
+                3
+              </span>
+            </button>
+
+            <div className="flex items-center gap-3 rounded-2xl bg-gray-50 px-3 py-2">
+              <img
+                src="https://i.pravatar.cc/100"
+                alt="profile"
+                className="h-12 w-12 rounded-full object-cover"
+              />
+
+              <div>
+                <h2 className="font-semibold text-gray-800">
+                  Yogitha
+                </h2>
+
+                <p className="text-sm text-gray-500">
+                  Admin
+                </p>
+              </div>
+
+              <ChevronDown size={18} />
+            </div>
+          </div>
         </div>
 
-        {/* RIGHT SLIDESHOW */}
-        <div
-          style={{
-            flex: 1,
-            height: "300px",
-            borderRadius: "22px",
-            overflow: "hidden",
-            boxShadow: "0 20px 40px rgba(0,0,0,0.25)",
-          }}
-        >
-          <img
-            src={slides[current]}
-            alt="crop"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              transition: "0.6s ease",
-            }}
-          />
+        {/* HERO SECTION */}
+        <div className="mt-6 grid gap-6 rounded-[35px] bg-white p-6 shadow-sm lg:grid-cols-2">
+          {/* LEFT */}
+          <div className="flex flex-col justify-center">
+            <div className="mb-5 inline-flex w-fit items-center gap-2 rounded-full bg-green-100 px-4 py-2 text-green-700">
+              🌱 AI Powered Agriculture
+            </div>
+
+            <h1 className="text-5xl font-bold leading-tight text-gray-900">
+              AI Powered Smart Agriculture
+            </h1>
+
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-gray-600">
+              Predict crop yield, detect diseases and get
+              actionable insights to make better farming
+              decisions.
+            </p>
+
+            {/* BUTTONS */}
+            <div className="mt-8 flex flex-wrap gap-4">
+              <button className="flex items-center gap-2 rounded-2xl bg-green-700 px-6 py-4 font-semibold text-white transition-all hover:scale-105">
+                Start Prediction
+                <ArrowRight size={18} />
+              </button>
+
+              <button className="rounded-2xl border border-green-700 px-6 py-4 font-semibold text-green-700 transition-all hover:bg-green-50">
+                Explore Insights
+              </button>
+            </div>
+
+            {/* USERS */}
+            <div className="mt-10 flex items-center gap-4">
+              <div className="flex -space-x-3">
+                <img
+                  className="h-12 w-12 rounded-full border-4 border-white"
+                  src="https://i.pravatar.cc/101"
+                />
+
+                <img
+                  className="h-12 w-12 rounded-full border-4 border-white"
+                  src="https://i.pravatar.cc/102"
+                />
+
+                <img
+                  className="h-12 w-12 rounded-full border-4 border-white"
+                  src="https://i.pravatar.cc/103"
+                />
+              </div>
+
+              <div>
+                <h2 className="font-bold text-gray-800">
+                  Trusted by 2000+ farmers
+                </h2>
+
+                <p className="text-gray-500">
+                  Across multiple regions
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT IMAGE */}
+          <div className="relative overflow-hidden rounded-[30px]">
+            <img
+              src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?q=80&w=1600&auto=format&fit=crop"
+              alt=""
+              className="h-full w-full object-cover"
+            />
+
+            {/* FLOATING CARD */}
+            <div className="absolute bottom-6 right-6 rounded-[24px] bg-white/90 p-6 shadow-2xl backdrop-blur-md">
+              <div className="flex items-center gap-3">
+                <div className="rounded-2xl bg-green-100 p-4 text-green-700">
+                  <BarChart3 size={28} />
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Model Accuracy
+                  </p>
+
+                  <h2 className="text-4xl font-bold text-gray-800">
+                    96%
+                  </h2>
+                </div>
+              </div>
+
+              <div className="mt-5 h-2 w-full rounded-full bg-gray-200">
+                <div className="h-2 w-[96%] rounded-full bg-green-600" />
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* ================= FEATURES SECTION ================= */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(3,1fr)",
-          gap: "25px",
-          marginTop: "50px",
-        }}
-      >
-        <Feature
-          title="Crop Insights"
-          desc="Analyze soil, nutrients, and environmental factors affecting crops."
-          image={card1}
-          icon={<Sprout size={20} />}
-          button="Explore"
-          onClick={() => navigate("/insights")}
-        />
+        {/* STATS */}
+        <div className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          {stats.map((item, index) => (
+            <div
+              key={index}
+              className="rounded-[28px] bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+            >
+              <div
+                className={`flex h-16 w-16 items-center justify-center rounded-2xl ${item.bg} ${item.text}`}
+              >
+                {item.icon}
+              </div>
 
-        <Feature
-          title="Yield Prediction"
-          desc="Predict crop yield using machine learning regression models."
-          image={card2}
-          icon={<BarChart3 size={20} />}
-          button="Predict"
-          onClick={() => navigate("/regression")}
-        />
+              <h3 className="mt-5 text-gray-500">
+                {item.title}
+              </h3>
 
-        <Feature
-          title="Time Series Forecast"
-          desc="Forecast future crop yield trends using time-series analysis."
-          image={card3}
-          icon={<Clock size={20} />}
-          button="Forecast"
-          onClick={() => navigate("/timeseries")}
-        />
-      </div>
+              <h2 className="mt-2 text-4xl font-bold text-gray-800">
+                {item.value}
+              </h2>
+
+              <p className="mt-2 text-sm text-green-600">
+                {item.growth}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* MODULES */}
+        <div className="mt-8 grid gap-6 lg:grid-cols-3">
+          {modules.map((item, index) => (
+            <div
+              key={index}
+              className={`rounded-[30px] p-7 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl ${item.bg}`}
+            >
+              <div
+                className={`flex h-16 w-16 items-center justify-center rounded-2xl ${item.iconBg} ${item.iconText}`}
+              >
+                {item.icon}
+              </div>
+
+              <h2 className="mt-6 text-3xl font-bold text-gray-800">
+                {item.title}
+              </h2>
+
+              <p className="mt-4 leading-relaxed text-gray-600">
+                {item.desc}
+              </p>
+
+              <button className="mt-6 flex items-center gap-2 font-semibold text-green-700 transition-all hover:gap-3">
+                Learn More
+                <ArrowRight size={18} />
+              </button>
+            </div>
+          ))}
+        </div>
+      </main>
     </div>
   );
 }
-
-/* ================= FEATURE CARD ================= */
-/* ================= FEATURE CARD ================= */
-function Feature({ title, desc, image, icon, button, onClick }) {
-  return (
-    <div
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-8px)";
-        e.currentTarget.style.boxShadow = "0 35px 70px rgba(0,0,0,0.35)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "0 25px 50px rgba(0,0,0,0.25)";
-      }}
-      style={{
-        background: "linear-gradient(135deg,#0b1f1a,#1f4037)",
-        borderRadius: "24px",
-        overflow: "hidden",
-        boxShadow: "0 25px 50px rgba(0,0,0,0.25)",
-        color: "#e6e3db",
-        transition: "all 0.3s ease",
-      }}
-    >
-      {/* IMAGE */}
-      <img
-        src={image}
-        alt={title}
-        style={{
-          width: "100%",
-          height: "180px",
-          objectFit: "cover",
-        }}
-      />
-
-      {/* CONTENT */}
-      <div style={{ padding: "24px" }}>
-        {/* ICON */}
-        <div
-          style={{
-            width: "44px",
-            height: "44px",
-            borderRadius: "50%",
-            background: "#a8bfa0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: "#0b1f1a",
-            marginBottom: "14px",
-            boxShadow: "0 8px 20px rgba(0,0,0,0.3)",
-          }}
-        >
-          {icon}
-        </div>
-
-        <h3 style={{ marginBottom: "10px", color: "#e6e3db" }}>
-          {title}
-        </h3>
-
-        <p style={{ fontSize: "14px", color: "#a8bfa0" }}>
-          {desc}
-        </p>
-
-        <button
-          onClick={onClick}
-          style={{
-            marginTop: "18px",
-            padding: "10px 22px",
-            background: "#a8bfa0",
-            border: "none",
-            borderRadius: "12px",
-            fontWeight: "600",
-            cursor: "pointer",
-            color: "#0b1f1a",
-            boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
-          }}
-        >
-          {button}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-<ChatBotWidget />
-export default Home;

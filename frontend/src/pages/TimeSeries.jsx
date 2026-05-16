@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import axios from "axios";
 import api from "../services/api";
 import {
   Chart as ChartJS,
@@ -40,13 +41,17 @@ function TimeSeriesForecast() {
               .split("T")[0]
           : endDate;
 
-      const res = await api.post("/predict/timeseries", {
-          start_date: startDate,
-          end_date: adjustedEndDate,
-      });
+      const userId = localStorage.getItem("userId");
 
+const res = await axios.post(
+  `http://127.0.0.1:8000/predict/timeseries?user_id=${userId}`,
+  {
+    start_date: startDate,
+    end_date: adjustedEndDate
+  }
+);
 
-      const values = res.data.predicted_yield;
+const values = res.data.predicted_yield;
 
       // 👉 SAFETY CHECK
       if (!Array.isArray(values)) {

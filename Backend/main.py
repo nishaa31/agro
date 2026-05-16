@@ -8,6 +8,7 @@ from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from torchvision import models, transforms
 from PIL import Image
 from fastapi import Form
+from datetime import datetime
 
 import joblib
 import json
@@ -38,10 +39,38 @@ yield_rf_model   = None
 yield_encoders   = None
 yield_meta       = None
 time_series_model = None
-
+#---------------------DB----------------------------------
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    phone = Column(String)
+    location = Column(String)
+
+
+class History(Base):
+    __tablename__ = "history"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer)
+    action_type = Column(String)
+    result = Column(String)
+    confidence = Column(String)
+    date = Column(String)
+
+Base.metadata.create_all(bind=engine)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # ─────────────────────────────────────────
 # LOAD MODELS
@@ -104,32 +133,7 @@ def load_time_series_model():
     print("✅ Loading time series model...")
     time_series_model = joblib.load(TIME_SERIES_MODEL_PATH)
 
-class User(Base):
-    __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
-    phone = Column(String)
-    location = Column(String)
-
-
-class History(Base):
-    __tablename__ = "history"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer)
-    disease = Column(String)
-    confidence = Column(String)
-    date = Column(String)
-
-Base.metadata.create_all(bind=engine)
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -138,7 +142,18 @@ async def lifespan(app: FastAPI):
     load_time_series_model()
     yield
 
-
+# ───────── HELPER ─────────
+def save_history(db, user_id, action, result, confidence="model"):
+    history = History(
+        user_id=user_id,
+        action_type=action,
+        result=result,
+        confidence=confidence,
+        date=str(datetime.now())
+    )
+    db.add(history)
+    db.commit()
+    
 # ─────────────────────────────────────────
 # APP INIT
 # ─────────────────────────────────────────
@@ -209,17 +224,7 @@ async def predict_disease(
     confidence = float(probs[top_idx])
 
     # 🔥 SAVE HISTORY (INSIDE FUNCTION)
-    from datetime import datetime
-
-    history = History(
-        user_id=user_id,
-        disease=disease,
-        confidence=str(round(confidence, 3)),
-        date=str(datetime.now())
-    )
-
-    db.add(history)
-    db.commit()
+    save_history(db, user_id, "disease", disease, str(round(confidence, 3)))
 
     # 🔥 AI LOGIC
     if confidence > 0.75:
@@ -240,14 +245,14 @@ async def predict_disease(
     )[:5]
 
     return {
-        "disease": disease,
-        "confidence": round(confidence, 3),
-        "severity": severity,
-        "yield_loss": yield_loss,
-        "explanation": explanation,
-        "treatment": get_treatment(disease),
-        "top_predictions": all_predictions
-    }
+    "disease": disease,
+    "confidence": round(confidence, 3),
+    "severity": severity,
+    "yield_loss": yield_loss,
+    "explanation": explanation,
+    "treatment": get_treatment(disease),
+    "top_predictions": all_predictions
+}
 
 
 # ─────────────────────────────────────────
@@ -267,7 +272,7 @@ class YieldInput(BaseModel):
 
 
 @app.post("/predict/yield")
-def predict_yield(data: YieldInput):
+def predict_yield(data: YieldInput, db: Session = Depends(get_db), user_id: int = 1):
 
     if yield_rf_model is None:
         raise HTTPException(500, "Yield model not loaded")
@@ -292,7 +297,7 @@ def predict_yield(data: YieldInput):
     features = np.array([[raw[f] for f in yield_meta["feature_names"]]])
 
     pred = float(yield_rf_model.predict(features)[0])
-
+    save_history(db, user_id, "yield", f"{pred} tonnes/hectare")
     return {
         "predicted_yield": round(pred, 2),
         "unit": "tonnes/hectare"
@@ -302,8 +307,10 @@ class TimeSeriesInput(BaseModel):
     start_date: date
     end_date: date
 
+
+
 @app.post("/predict/timeseries")
-def predict_timeseries(data: TimeSeriesInput):
+def predict_timeseries(data: TimeSeriesInput, user_id: int, db: Session = Depends(get_db)):
 
     if time_series_model is None:
         raise HTTPException(500, "Time series model not loaded")
@@ -321,11 +328,14 @@ def predict_timeseries(data: TimeSeriesInput):
     steps = len(dates)
     preds = time_series_model.forecast(steps=steps)
 
+    save_history(db, user_id, "timeseries", "Forecast generated")
+
     return {
         "dates": [str(d) for d in dates],
         "predicted_yield": [float(p) for p in preds]
     }
 
+#----------imapct------------------
 class ImpactInput(BaseModel):
     soil_type: str
     temperature: float
@@ -333,7 +343,7 @@ class ImpactInput(BaseModel):
 
 
 @app.post("/predict/impact")
-def predict_impact(data: ImpactInput):
+def predict_impact(data: ImpactInput, user_id: int, db: Session = Depends(get_db)):
 
     # 🔥 SIMPLE LOGIC (demo + realistic)
     impact = 0
@@ -364,12 +374,15 @@ def predict_impact(data: ImpactInput):
     else:
         fertilizer = "Organic Compost Recommended"
 
+    save_history(db, user_id, "impact", f"Loss {impact}%")
+
     return {
         "yield_loss": impact,
         "fertilizer": fertilizer,
         "status": "High Risk" if impact > 40 else "Moderate" if impact > 20 else "Low Risk"
     }
 
+#---------login-----------------
 class LoginInput(BaseModel):
     name: str
     phone: str
@@ -406,6 +419,8 @@ def login(data: LoginInput, db: Session = Depends(get_db)):
         "location": user.location
     }
 
+#---------------profile--------------
+
 @app.get("/profile/{user_id}")
 def get_profile(user_id: int, db: Session = Depends(get_db)):
 
@@ -423,7 +438,8 @@ def get_profile(user_id: int, db: Session = Depends(get_db)):
         "location": user.location,
         "history": [
             {
-                "disease": h.disease,
+                "type": h.action_type,
+                "result": h.result,
                 "confidence": h.confidence,
                 "date": h.date
             }

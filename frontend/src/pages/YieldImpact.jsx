@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 const YieldImpact = () => {
-
   const [form, setForm] = useState({
     Soil_Type: "",
     Temperature: "",
@@ -21,7 +20,6 @@ const YieldImpact = () => {
   };
 
   const handlePredict = async () => {
-
     if (!form.Soil_Type || !form.Temperature || !form.Humidity) {
       setError("Please fill all fields!");
       return;
@@ -31,9 +29,10 @@ const YieldImpact = () => {
     setError(null);
 
     try {
+      const userId = localStorage.getItem("userId");
 
       const response = await fetch(
-        "http://127.0.0.1:8000/predict/impact",
+        "http://127.0.0.1:8000/predict/impact?user_id=" + userId,
         {
           method: "POST",
           headers: {
@@ -41,8 +40,8 @@ const YieldImpact = () => {
           },
           body: JSON.stringify({
             soil_type: form.Soil_Type,
-            temperature: parseFloat(form.Temperature),
-            humidity: parseFloat(form.Humidity)
+            temperature: Number(form.Temperature),
+            humidity: Number(form.Humidity)
           })
         }
       );
@@ -56,146 +55,124 @@ const YieldImpact = () => {
       });
 
     } catch (err) {
+      console.error(err);
       setError("Backend connection error");
     }
 
     setLoading(false);
   };
 
+  const box = (bg) => ({
+    marginTop: "15px",
+    padding: "12px",
+    borderRadius: "10px",
+    background: bg,
+    fontWeight: "500",
+    color: "#000"
+  });
+
   return (
-    <div
-      style={{
-        
-        minHeight: "100vh",
-        padding: "40px",
-      }}
-    >
+    <div style={{
+      minHeight: "100vh",
+      padding: "40px",
+      background: "#f5f7fa"   // 🔥 FORCE LIGHT BG
+    }}>
 
-      <div
-        style={{
-          background: "linear-gradient(135deg,#0f2b24,#123c32)",
-          borderRadius: "30px",
-          padding: "50px",
-          color: "#e6e3db",
-        }}
-      >
+      {/* MAIN CARD */}
+      <div style={{
+        background: "#1b4332",
+        borderRadius: "30px",
+        padding: "50px",
+        color: "#ffffff"
+      }}>
 
-        <h1 style={{ fontSize: "32px", fontWeight: "700" }}>
-          Yield Impact & Fertilizer Recommendation
-        </h1>
-
-        <p style={{ marginTop: "10px", opacity: "0.8" }}>
+        <h1>🌱 Yield Impact & Fertilizer Recommendation</h1>
+        <p style={{ opacity: 0.8 }}>
           Enter environmental details to estimate yield loss.
         </p>
 
-        <div
-          style={{
-            marginTop: "40px",
-            backgroundColor: "#d9dfd6",
-            padding: "40px",
-            borderRadius: "25px",
-            color: "#0f2b24",
-            maxWidth: "900px",
-          }}
-        >
+        {/* INPUT CARD */}
+        <div style={{
+          marginTop: "30px",
+          background: "#ffffff",
+          padding: "30px",
+          borderRadius: "20px",
+          color: "#000",
+          maxWidth: "600px"
+        }}>
 
-          {/* Soil Type */}
           <div style={{ marginBottom: "20px" }}>
-            <label>Soil Type</label>
-            <br />
-            <select
-              name="Soil_Type"
-              value={form.Soil_Type}
-              onChange={handleChange}
-              style={inputStyle}
-            >
+            <label>Soil Type</label><br />
+            <select name="Soil_Type" value={form.Soil_Type} onChange={handleChange} style={input}>
               <option value="">Select Soil</option>
               <option>Loamy</option>
               <option>Clay</option>
               <option>Sandy</option>
-              <option>Peaty</option>
-              <option>Saline</option>
             </select>
           </div>
 
-          {/* Temperature */}
           <div style={{ marginBottom: "20px" }}>
-            <label>Temperature (°C)</label>
-            <br />
-            <input
-              type="number"
-              name="Temperature"
-              value={form.Temperature}
-              onChange={handleChange}
-              style={inputStyle}
-            />
+            <label>Temperature</label><br />
+            <input type="number" name="Temperature" value={form.Temperature} onChange={handleChange} style={input}/>
           </div>
 
-          {/* Humidity */}
           <div style={{ marginBottom: "20px" }}>
-            <label>Humidity (%)</label>
-            <br />
-            <input
-              type="number"
-              name="Humidity"
-              value={form.Humidity}
-              onChange={handleChange}
-              style={inputStyle}
-            />
+            <label>Humidity</label><br />
+            <input type="number" name="Humidity" value={form.Humidity} onChange={handleChange} style={input}/>
           </div>
 
-          {error && (
-            <p style={{ color: "red", marginBottom: "10px" }}>{error}</p>
-          )}
+          {error && <p style={{ color: "red" }}>{error}</p>}
 
-          <button
-            onClick={handlePredict}
-            disabled={loading}
-            style={{
-              padding: "12px 24px",
-              borderRadius: "12px",
-              border: "none",
-              backgroundColor: "#a8bfa0",
-              color: "#0f2b24",
-              fontWeight: "600",
-              cursor: "pointer",
-            }}
-          >
+          <button onClick={handlePredict} style={btn}>
             {loading ? "Analyzing..." : "Analyze Impact"}
           </button>
-
         </div>
 
-        {/* RESULT CARD */}
-
+        {/* 🔥 RESULT CARD (FIXED) */}
         {result && (
+          <div style={{
+            marginTop: "40px",
+            background: "#ffffff",   // 🔥 IMPORTANT
+            color: "#000",           // 🔥 IMPORTANT
+            padding: "30px",
+            borderRadius: "20px",
+            maxWidth: "600px",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
+          }}>
 
-          <div
-            style={{
-              marginTop: "40px",
-              padding: "30px",
-              borderRadius: "25px",
-              color: "#0f2b24",
-              maxWidth: "900px",
-            }}
-          >
+            <h2 style={{ color: "#1b4332" }}>📊 Prediction Result</h2>
 
-            <h2>Prediction Result</h2>
+            <div style={box("#e8f5e9")}>
+              📉 Yield Loss: {result.loss}%
+            </div>
 
-            <p style={{ marginTop: "10px" }}>
-              <strong>Estimated Yield Loss:</strong> {result.loss}
-            </p>
+            <div style={{
+  marginTop: "10px",
+  height: "8px",
+  background: "#ddd",
+  borderRadius: "10px"
+}}>
+  <div style={{
+    width: `${result.loss}%`,
+    background: "#1b4332",
+    height: "100%",
+    borderRadius: "10px"
+  }}></div>
+</div>
 
-            <p style={{ marginTop: "10px" }}>
-             <strong>Recommended Fertilizer:</strong>{" "}
-             {result?.fertilizer || "No recommendation"}
-            </p>
-            <p style={{ marginTop: "10px" }}>
-  <strong>Risk Level:</strong>{" "}
-  {result?.status || "N/A"}
-</p>
+            <div style={box("#e3f2fd")}>
+              🌱 Fertilizer: {result.fertilizer}
+            </div>
+
+            <div style={{
+  ...box(result.status === "High Risk" ? "#f8d7da"
+      : result.status === "Moderate" ? "#fff3cd"
+      : "#d4edda")
+}}>
+  ⚠️ Risk Level: {result.status}
+</div>
+
           </div>
-
         )}
 
       </div>
@@ -203,14 +180,22 @@ const YieldImpact = () => {
   );
 };
 
-const inputStyle = {
-  marginTop: "5px",
+const input = {
+  width: "100%",
   padding: "10px",
-  width: "300px",
   borderRadius: "10px",
   border: "1px solid #ccc",
-  backgroundColor: "#ffffff",
-  color: "#0f2b24",
+  marginTop: "5px"
+};
+
+const btn = {
+  padding: "12px",
+  borderRadius: "10px",
+  border: "none",
+  background: "#1b4332",
+  color: "#fff",
+  cursor: "pointer",
+  width: "100%"
 };
 
 export default YieldImpact;
