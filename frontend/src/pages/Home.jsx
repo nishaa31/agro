@@ -12,7 +12,15 @@ import {
   ScanLine,
 } from "lucide-react";
 
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 export default function Home() {
+
+  const [search, setSearch] = useState("");
+  const navigate = useNavigate();
+  const username = localStorage.getItem("username");
+
   const stats = [
     {
       title: "Total Predictions",
@@ -56,6 +64,7 @@ export default function Home() {
       bg: "bg-green-50",
       iconBg: "bg-green-100",
       iconText: "text-green-700",
+      route: "/disease",
     },
     {
       title: "Yield Prediction",
@@ -64,6 +73,7 @@ export default function Home() {
       bg: "bg-blue-50",
       iconBg: "bg-blue-100",
       iconText: "text-blue-700",
+      route: "/yield",
     },
     {
       title: "Time Series Forecast",
@@ -72,6 +82,7 @@ export default function Home() {
       bg: "bg-orange-50",
       iconBg: "bg-orange-100",
       iconText: "text-orange-700",
+      route: "/timeseries",
     },
   ];
 
@@ -101,10 +112,12 @@ export default function Home() {
               <Search className="text-gray-500" size={20} />
 
               <input
-                type="text"
-                placeholder="Search anything..."
-                className="w-full bg-transparent outline-none"
-              />
+  type="text"
+  placeholder="Search anything..."
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  className="w-full bg-transparent outline-none"
+/>
             </div>
           </div>
 
@@ -127,7 +140,7 @@ export default function Home() {
 
               <div>
                 <h2 className="font-semibold text-gray-800">
-                  Yogitha
+                  {username || "User"}
                 </h2>
 
                 <p className="text-sm text-gray-500">
@@ -160,12 +173,12 @@ export default function Home() {
 
             {/* BUTTONS */}
             <div className="mt-8 flex flex-wrap gap-4">
-              <button className="flex items-center gap-2 rounded-2xl bg-green-700 px-6 py-4 font-semibold text-white transition-all hover:scale-105">
+              <button onClick={() => navigate("/disease")} className="flex items-center gap-2 rounded-2xl bg-green-700 px-6 py-4 font-semibold text-white transition-all hover:scale-105">
                 Start Prediction
                 <ArrowRight size={18} />
               </button>
 
-              <button className="rounded-2xl border border-green-700 px-6 py-4 font-semibold text-green-700 transition-all hover:bg-green-50">
+              <button onClick={() => navigate("/insights")} className="rounded-2xl border border-green-700 px-6 py-4 font-semibold text-green-700 transition-all hover:bg-green-50">
                 Explore Insights
               </button>
             </div>
