@@ -47,7 +47,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
       >
         {isOpen && (
           <h2 style={{ fontWeight: "700" }}>
-            Agro<span style={{ color: "#a8bfa0" }}>Pesto</span>
+            Agro<span style={{ color: "#a8bfa0" }}>Pestro</span>
           </h2>
         )}
 
