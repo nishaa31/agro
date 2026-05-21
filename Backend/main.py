@@ -19,6 +19,7 @@ import torch
 import torch.nn as nn
 import shutil
 
+os.makedirs("uploads", exist_ok=True)
 # ─────────────────────────────────────────
 # CONFIG
 # ─────────────────────────────────────────
@@ -49,8 +50,11 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
-    phone = Column(String)
+    phone = Column(String, unique=True)
+    password = Column(String)
+    email = Column(String, default="")
     location = Column(String)
+    profile_image = Column(String, default="")
 
 
 class History(Base):
@@ -384,9 +388,10 @@ def predict_impact(data: ImpactInput, user_id: int, db: Session = Depends(get_db
 
 #---------login-----------------
 class LoginInput(BaseModel):
-    name: str
+    name: str = ""
     phone: str
-    location: str
+    password: str
+    location: str= ""
 
 
 @app.post("/login")
@@ -394,30 +399,42 @@ def login(data: LoginInput, db: Session = Depends(get_db)):
 
     user = db.query(User).filter(User.phone == data.phone).first()
 
+    # LOGIN
     if user:
-        # 🔥 UPDATE EXISTING USER
-        user.name = data.name
-        user.location = data.location
-        db.commit()
-        db.refresh(user)
 
-    else:
-        # 🔥 CREATE NEW USER
-        user = User(
-            name=data.name,
-            phone=data.phone,
-            location=data.location
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+        if user.password != data.password:
+            raise HTTPException(status_code=401, detail="Invalid password")
+
+        return {
+            "user_id": user.id,
+            "name": user.name,
+            "phone": user.phone,
+            "location": user.location,
+            "email": user.email,
+            "profile_image": user.profile_image
+        }
+
+    # REGISTER
+    user = User(
+        name=data.name,
+        phone=data.phone,
+        password=data.password,
+        location=data.location,
+    )
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
 
     return {
         "user_id": user.id,
         "name": user.name,
         "phone": user.phone,
-        "location": user.location
+        "location": user.location,
+        "email": user.email,
+        "profile_image": user.profile_image
     }
+
 
 #---------------profile--------------
 
@@ -445,6 +462,33 @@ def get_profile(user_id: int, db: Session = Depends(get_db)):
             }
             for h in history
         ]
+    }
+
+@app.put("/profile/{user_id}")
+def update_profile(user_id: int, data: dict, db: Session = Depends(get_db)):
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.name = data.get("name", user.name)
+    user.phone = data.get("phone", user.phone)
+    user.location = data.get("location", user.location)
+    user.email = data.get("email", user.email)
+
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "message": "Profile updated successfully",
+        "user": {
+            "user_id": user.id,
+            "name": user.name,
+            "phone": user.phone,
+            "location": user.location,
+            "email": user.email,
+        }
     }
 
 @app.post("/upload/profile/{user_id}")

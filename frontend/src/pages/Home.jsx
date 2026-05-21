@@ -18,7 +18,7 @@ import {
   Palette,
 } from "lucide-react";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Home() {
@@ -27,7 +27,43 @@ export default function Home() {
 
   const navigate = useNavigate();
 
-  const username = localStorage.getItem("username");
+  const [profileData, setProfileData] = useState({
+  name: localStorage.getItem("username") || "User",
+  phone: localStorage.getItem("phone") || "",
+  location: localStorage.getItem("location") || "",
+  email: localStorage.getItem("email") || "",
+});
+
+useEffect(() => {
+  const fetchProfile = async () => {
+    const userId = localStorage.getItem("userId");
+
+    if (!userId) return;
+
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/profile/${userId}`);
+      const data = await res.json();
+
+      setProfileData({
+        name: data.name || "User",
+        phone: data.phone || "",
+        location: data.location || "",
+        email: data.email || "",
+      });
+
+      localStorage.setItem("username", data.name || "User");
+      localStorage.setItem("phone", data.phone || "");
+      localStorage.setItem("location", data.location || "");
+      localStorage.setItem("email", data.email || "");
+
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  fetchProfile();
+}, []);
+
   const [openProfileModal, setOpenProfileModal] =
   useState(false);
 
@@ -172,6 +208,36 @@ const [activeTab, setActiveTab] =
     },
   ];
 
+  const handleSaveProfile = async () => {
+  try {
+    const userId = localStorage.getItem("userId");
+
+    const res = await fetch(
+      `http://127.0.0.1:8000/profile/${userId}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(profileData),
+      }
+    );
+
+    const data = await res.json();
+
+    localStorage.setItem("username", profileData.name);
+    localStorage.setItem("phone", profileData.phone);
+    localStorage.setItem("location", profileData.location);
+    localStorage.setItem("email", profileData.email);
+
+    alert("Profile updated successfully 🔥");
+
+    setOpenProfileModal(false);
+  } catch (err) {
+    console.log(err);
+  }
+};
+
   return (
     <div className="min-h-screen bg-[#f4f7f2] p-6">
       {/* TOPBAR */}
@@ -229,7 +295,7 @@ const [activeTab, setActiveTab] =
 
               <div className="text-left">
                 <h2 className="font-semibold text-gray-800">
-                  {username || "User"}
+                  {profileData.name || "User"}
                 </h2>
 
                 <p className="text-sm text-gray-500">
@@ -481,7 +547,7 @@ const [activeTab, setActiveTab] =
 
         <div>
           <h1 className="text-4xl font-bold text-gray-800">
-            {username || "User"}
+            {profileData.name || "User"}
           </h1>
 
           <p className="mt-2 text-gray-500">
@@ -499,7 +565,10 @@ const [activeTab, setActiveTab] =
 
           <input
             type="text"
-            defaultValue={username || "User"}
+            defaultValue={profileData.name}
+onChange={(e) =>
+  setProfileData({ ...profileData, name: e.target.value })
+}
             className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 outline-none focus:border-green-500"
           />
         </div>
@@ -511,7 +580,10 @@ const [activeTab, setActiveTab] =
 
           <input
             type="email"
-            placeholder="Enter email"
+            value={profileData.email}
+onChange={(e) =>
+  setProfileData({ ...profileData, email: e.target.value })
+}
             className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 outline-none focus:border-green-500"
           />
         </div>
@@ -523,7 +595,10 @@ const [activeTab, setActiveTab] =
 
           <input
             type="text"
-            placeholder="Enter phone number"
+            value={profileData.phone}
+onChange={(e) =>
+  setProfileData({ ...profileData, phone: e.target.value })
+}
             className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 outline-none focus:border-green-500"
           />
         </div>
@@ -535,16 +610,19 @@ const [activeTab, setActiveTab] =
 
           <input
             type="text"
-            placeholder="Enter location"
+            value={profileData.location}
+onChange={(e) =>
+  setProfileData({ ...profileData, location: e.target.value })
+}
             className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 outline-none focus:border-green-500"
           />
         </div>
       </div>
 
       {/* BUTTON */}
-      <button className="mt-8 rounded-2xl bg-green-700 px-8 py-4 font-semibold text-white transition-all hover:scale-105">
-        Save Changes
-      </button>
+      <button onClick={handleSaveProfile}>
+  Save Changes
+</button>
     </div>
   </div>
 )}

@@ -13,23 +13,39 @@ export default function Login() {
 
 const handleLogin = async (e) => {
   e.preventDefault();
+  setError('');
 
-  const res = await fetch("http://127.0.0.1:8000/login", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      name,
-      phone,
-      location
-    })
-  });
+  try {
+    const res = await fetch("http://127.0.0.1:8000/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        phone,
+        password,
+      }),
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  localStorage.setItem("userId", data.user_id);
-  navigate("/home");
+    if (!res.ok) {
+      setError(data.detail || "Login failed");
+      return;
+    }
+
+    localStorage.setItem("userId", data.user_id);
+    localStorage.setItem("username", data.name);
+    localStorage.setItem("phone", data.phone);
+    localStorage.setItem("location", data.location || "");
+    localStorage.setItem("email", data.email || "");
+    localStorage.setItem("profileImage", data.profile_image || "");
+
+    navigate("/home");
+  } catch (err) {
+    setError("Server error")
+  }
 };
-console.log(name, phone, location);
 
  const handleRegister = async (e) => {
   e.preventDefault();
@@ -40,23 +56,38 @@ console.log(name, phone, location);
     return;
   }
 
-  const res = await fetch("http://127.0.0.1:8000/login", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      name,
-      phone,
-      location,
-    }),
-  });
+  try {
+    const res = await fetch("http://127.0.0.1:8000/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name,
+        phone,
+        password,
+        location,
+      }),
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  localStorage.setItem("userId", data.user_id);
+    if (!res.ok) {
+      setError(data.detail || "Registration failed");
+      return;
+    }
 
-  navigate("/home");
+    localStorage.setItem("userId", data.user_id);
+    localStorage.setItem("username", data.name);
+    localStorage.setItem("phone", data.phone);
+    localStorage.setItem("location", data.location || "");
+    localStorage.setItem("email", data.email || "");
+    localStorage.setItem("profileImage", data.profile_image || "");
+
+    navigate("/home");
+  } catch (err) {
+    setError("Server error");
+  }
 };
 
   return (
