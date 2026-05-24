@@ -1,9 +1,14 @@
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
-import { useState } from "react";
-import Sidebar from "./components/Sidebar";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+
 import "./styles/layout.css";
 
 import Login from "./pages/Login";
+
 import Home from "./pages/Home";
 import DiseaseDetection from "./pages/DiseaseDetection";
 import YieldImpact from "./pages/YieldImpact";
@@ -14,45 +19,36 @@ import TimeSeries from "./pages/TimeSeries";
 import Insights from "./pages/Insights";
 import Profile from "./pages/Profile";
 
-const isLoggedIn = () => localStorage.getItem("userId");
+import ConsumerHome from "./pages/ConsumerHome";
+import Marketplace from "./pages/Marketplace";
+import Cart from "./pages/Cart";
+import Checkout from "./pages/Checkout";
+import MyOrders from "./pages/MyOrders";
 
-/* 🔥 MAIN LAYOUT */
-function Layout() {
-  const [isOpen, setIsOpen] = useState(true);
+import Orders from "./pages/Orders";
+import AddProduct from "./pages/AddProduct";
+import MyProducts from "./pages/MyProducts";
 
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
-  };
-
-  return (
-    <div className="app">
-      <Sidebar isOpen={isOpen} toggleSidebar={toggleSidebar} />
-
-      <div
-        className="main"
-        style={{
-          marginLeft: isOpen ? "230px" : "80px",
-          transition: "0.3s ease"
-        }}
-      >
-        <Outlet /> {/* 🔥 THIS IS IMPORTANT */}
-      </div>
-    </div>
-  );
-}
+const isLoggedIn = () =>
+  localStorage.getItem("userId");
 
 /* 🔐 PROTECTED ROUTE */
-function Protected() {
+function Protected({ children }) {
+
   if (!isLoggedIn()) {
     return <Navigate to="/login" replace />;
   }
-  return <Layout />;
+
+  return children;
 }
 
 /* 🚀 APP */
 export default function App() {
+
   return (
+
     <BrowserRouter>
+
       <Routes>
 
         {/* ROOT */}
@@ -60,30 +56,186 @@ export default function App() {
           path="/"
           element={
             isLoggedIn()
-              ? <Navigate to="/home" replace />
-              : <Navigate to="/login" replace />
+              ? (
+                  <Navigate
+                    to="/home"
+                    replace
+                  />
+                )
+              : (
+                  <Navigate
+                    to="/login"
+                    replace
+                  />
+                )
           }
         />
 
         {/* LOGIN */}
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/login"
+          element={<Login />}
+        />
 
-        {/* 🔥 PROTECTED ROUTES WITH LAYOUT */}
-        <Route element={<Protected />}>
+        {/* 🔥 FARMER ROUTES */}
 
-          <Route path="/home" element={<Home />} />
-          <Route path="/disease" element={<DiseaseDetection />} />
-          <Route path="/yield" element={<YieldImpact />} />
-          <Route path="/weather" element={<Weather />} />
-          <Route path="/market" element={<Market />} />
-          <Route path="/regression" element={<Regression />} />
-          <Route path="/timeseries" element={<TimeSeries />} />
-          <Route path="/insights" element={<Insights />} />
-          <Route path="/profile" element={<Profile />} />
+        <Route
+          path="/home"
+          element={
+            <Protected>
+              <Home />
+            </Protected>
+          }
+        />
 
-        </Route>
+        <Route
+          path="/disease"
+          element={
+            <Protected>
+              <DiseaseDetection />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/yield"
+          element={
+            <Protected>
+              <YieldImpact />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/weather"
+          element={
+            <Protected>
+              <Weather />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/market"
+          element={
+            <Protected>
+              <Market />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/regression"
+          element={
+            <Protected>
+              <Regression />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/timeseries"
+          element={
+            <Protected>
+              <TimeSeries />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/insights"
+          element={
+            <Protected>
+              <Insights />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/profile"
+          element={
+            <Protected>
+              <Profile />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/my-products"
+          element={
+            <Protected>
+              <MyProducts />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/orders"
+          element={
+            <Protected>
+              <Orders />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/add-products"
+          element={
+            <Protected>
+              <AddProduct />
+            </Protected>
+          }
+        />
+
+        {/* 🔥 CONSUMER ROUTES */}
+
+        <Route
+          path="/consumer"
+          element={
+            <Protected>
+              <ConsumerHome />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/marketplace"
+          element={
+            <Protected>
+              <Marketplace />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/cart"
+          element={
+            <Protected>
+              <Cart />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/checkout"
+          element={
+            <Protected>
+              <Checkout />
+            </Protected>
+          }
+        />
+
+        <Route
+          path="/my-orders"
+          element={
+            <Protected>
+              <MyOrders />
+            </Protected>
+          }
+        />
 
       </Routes>
+
     </BrowserRouter>
   );
 }

@@ -9,6 +9,7 @@ from torchvision import models, transforms
 from PIL import Image
 from fastapi import Form
 from datetime import datetime
+from fastapi.staticfiles import StaticFiles
 
 import joblib
 import json
@@ -19,6 +20,7 @@ import torch
 import torch.nn as nn
 import shutil
 
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 os.makedirs("uploads", exist_ok=True)
 # ─────────────────────────────────────────
 # CONFIG
@@ -55,7 +57,7 @@ class User(Base):
     email = Column(String, default="")
     location = Column(String)
     profile_image = Column(String, default="")
-
+    role = Column(String, default="farmer")
 
 class History(Base):
     __tablename__ = "history"
@@ -67,7 +69,7 @@ class History(Base):
     confidence = Column(String)
     date = Column(String)
 
-Base.metadata.create_all(bind=engine)
+
 
 def get_db():
     db = SessionLocal()
@@ -75,6 +77,53 @@ def get_db():
         yield db
     finally:
         db.close()
+
+class Product(Base):
+    __tablename__ = "products"
+
+    id = Column(Integer, primary_key=True)
+    farmer_id = Column(Integer)
+    name = Column(String)
+    category = Column(String)
+    price = Column(Integer)
+    stock = Column(Integer)
+    image = Column(String)
+    description = Column(String)
+    
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id = Column(Integer, primary_key=True)
+    customer_id = Column(Integer)
+    farmer_id = Column(Integer)
+    product_id = Column(Integer)
+    quantity = Column(Integer)
+    total_price = Column(Integer)
+    status = Column(String, default="Pending")
+  
+
+class ProductInput(BaseModel):
+    farmer_id: int
+    name: str
+    category: str
+    price: int
+    stock: int
+    image: str
+    description: str
+   
+
+class Cart(Base):
+    __tablename__ = "cart"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(Integer)
+    product_id = Column(Integer)
+
+    quantity = Column(Integer, default=1)
+
+Base.metadata.create_all(bind=engine)
 
 # ─────────────────────────────────────────
 # LOAD MODELS
@@ -170,6 +219,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -392,7 +442,7 @@ class LoginInput(BaseModel):
     phone: str
     password: str
     location: str= ""
-
+    role: str = "farmer"
 
 @app.post("/login")
 def login(data: LoginInput, db: Session = Depends(get_db)):
@@ -411,7 +461,8 @@ def login(data: LoginInput, db: Session = Depends(get_db)):
             "phone": user.phone,
             "location": user.location,
             "email": user.email,
-            "profile_image": user.profile_image
+            "profile_image": user.profile_image,
+            "role": user.role,
         }
 
     # REGISTER
@@ -420,6 +471,7 @@ def login(data: LoginInput, db: Session = Depends(get_db)):
         phone=data.phone,
         password=data.password,
         location=data.location,
+        role=data.role,
     )
 
     db.add(user)
@@ -434,7 +486,6 @@ def login(data: LoginInput, db: Session = Depends(get_db)):
         "email": user.email,
         "profile_image": user.profile_image
     }
-
 
 #---------------profile--------------
 
@@ -453,6 +504,8 @@ def get_profile(user_id: int, db: Session = Depends(get_db)):
         "name": user.name,
         "phone": user.phone,
         "location": user.location,
+        "email": user.email,
+        "profile_image": user.profile_image,
         "history": [
             {
                 "type": h.action_type,
@@ -492,15 +545,302 @@ def update_profile(user_id: int, data: dict, db: Session = Depends(get_db)):
     }
 
 @app.post("/upload/profile/{user_id}")
-def upload_profile(user_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
+def upload_profile(
+    user_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
 
-    file_path = f"uploads/{user_id}_{file.filename}"
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    filename = f"{user_id}_{file.filename}"
+    file_path = f"uploads/{filename}"
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    user = db.query(User).filter(User.id == user_id).first()
-    user.profile_image = file_path
+    image_url = f"http://127.0.0.1:8000/uploads/{filename}"
+
+    user.profile_image = image_url
+
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "message": "uploaded",
+        "profile_image": image_url
+    }
+
+# 🔥 ADD PRODUCT
+@app.post("/add-product")
+def add_product(data: ProductInput, db: Session = Depends(get_db)):
+
+    product = Product(
+        farmer_id=data.farmer_id,
+        name=data.name,
+        category=data.category,
+        price=data.price,
+        stock=data.stock,
+        image=data.image,
+        description=data.description
+    )
+
+    db.add(product)
+    db.commit()
+    db.refresh(product)
+
+    return {
+        "message": "Product added successfully"
+    }
+
+
+# 🔥 GET PRODUCTS
+@app.get("/products")
+def get_products(db: Session = Depends(get_db)):
+
+    products = db.query(Product).all()
+
+    return [
+        {
+            "id": p.id,
+            "farmer_id": p.farmer_id,
+            "name": p.name,
+            "category": p.category,
+            "price": p.price,
+            "stock": p.stock,
+            "image": p.image,
+            "description": p.description
+        }
+        for p in products
+    ]
+
+# 🔥 DELETE PRODUCT
+@app.delete("/delete-product/{product_id}")
+def delete_product(
+    product_id: int,
+    db: Session = Depends(get_db)
+):
+
+    product = db.query(Product).filter(
+        Product.id == product_id
+    ).first()
+
+    if not product:
+        return {
+            "message": "Product not found"
+        }
+
+    db.delete(product)
     db.commit()
 
-    return {"message": "uploaded", "path": file_path}
+    return {
+        "message": "Product deleted"
+    }
+
+class CartInput(BaseModel):
+    user_id: int
+    product_id: int
+
+
+# 🔥 ADD TO CART
+@app.post("/add-to-cart")
+def add_to_cart(
+    data: CartInput,
+    db: Session = Depends(get_db)
+):
+
+    cart_item = Cart(
+        user_id=data.user_id,
+        product_id=data.product_id,
+        quantity=1
+    )
+
+    db.add(cart_item)
+    db.commit()
+
+    return {
+        "message": "Added to cart"
+    }
+
+# 🔥 GET CART
+@app.get("/cart/{user_id}")
+def get_cart(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+
+    cart_items = db.query(Cart).filter(
+        Cart.user_id == user_id
+    ).all()
+
+    result = []
+
+    for item in cart_items:
+
+        product = db.query(Product).filter(
+            Product.id == item.product_id
+        ).first()
+
+        if product:
+
+            result.append({
+                "cart_id": item.id,
+                "product_id": product.id,
+                "name": product.name,
+                "price": product.price,
+                "image": product.image,
+                "quantity": item.quantity
+            })
+
+    return result
+
+
+class OrderInput(BaseModel):
+    user_id: int
+
+
+# 🔥 PLACE ORDER
+@app.post("/place-order")
+def place_order(
+    data: OrderInput,
+    db: Session = Depends(get_db)
+):
+
+    cart_items = db.query(Cart).filter(
+        Cart.user_id == data.user_id
+    ).all()
+
+    if not cart_items:
+        return {
+            "message": "Cart is empty"
+        }
+
+    for item in cart_items:
+
+        product = db.query(Product).filter(
+            Product.id == item.product_id
+        ).first()
+
+        if product:
+
+            order = Order(
+                customer_id=data.user_id,
+                farmer_id=product.farmer_id,
+                product_id=product.id,
+                quantity=item.quantity,
+                total_price=product.price * item.quantity,
+                status="Pending"
+            )
+
+            db.add(order)
+
+    # 🔥 COMMIT IMPORTANT
+    db.commit()
+
+    # 🔥 CLEAR CART
+    db.query(Cart).filter(
+        Cart.user_id == data.user_id
+    ).delete()
+
+    db.commit()
+
+    return {
+        "message": "Order placed successfully"
+    }
+
+# 🔥 FARMER ORDERS
+@app.get("/farmer-orders/{farmer_id}")
+def farmer_orders(
+    farmer_id: int,
+    db: Session = Depends(get_db)
+):
+
+    orders = db.query(Order).filter(
+        Order.farmer_id == farmer_id
+    ).all()
+
+    result = []
+
+    for order in orders:
+
+        product = db.query(Product).filter(
+            Product.id == order.product_id
+        ).first()
+
+        customer = db.query(User).filter(
+            User.id == order.customer_id
+        ).first()
+
+        if product and customer:
+
+            result.append({
+                "order_id": order.id,
+                "customer_name": customer.name,
+                "customer_phone": customer.phone,
+                "product_name": product.name,
+                "quantity": order.quantity,
+                "total_price": order.total_price,
+                "status": order.status
+            })
+
+    return result
+
+# 🔥 UPDATE ORDER STATUS
+@app.put("/update-order/{order_id}")
+def update_order(
+    order_id: int,
+    data: dict,
+    db: Session = Depends(get_db)
+):
+
+    order = db.query(Order).filter(
+        Order.id == order_id
+    ).first()
+
+    if not order:
+        return {
+            "message": "Order not found"
+        }
+
+    order.status = data["status"]
+
+    db.commit()
+
+    return {
+        "message": "Status updated"
+    }
+
+# 🔥 CUSTOMER ORDERS
+@app.get("/customer-orders/{customer_id}")
+def customer_orders(
+    customer_id: int,
+    db: Session = Depends(get_db)
+):
+
+    orders = db.query(Order).filter(
+        Order.customer_id == customer_id
+    ).all()
+
+    result = []
+
+    for order in orders:
+
+        product = db.query(Product).filter(
+            Product.id == order.product_id
+        ).first()
+
+        if product:
+
+            result.append({
+                "order_id": order.id,
+                "product_name": product.name,
+                "image": product.image,
+                "quantity": order.quantity,
+                "total_price": order.total_price,
+                "status": order.status
+            })
+
+    return result

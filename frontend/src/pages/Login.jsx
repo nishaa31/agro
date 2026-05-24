@@ -1,248 +1,351 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import './Login.css'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import "./Login.css";
 
 export default function Login() {
-  const navigate = useNavigate()
-  const [tab, setTab]         = useState('login')   // 'login' | 'register'
-  const [name, setName]       = useState('')
-  const [phone, setPhone]     = useState('')
-  const [password, setPassword] = useState('')
-  const [location, setLocation] = useState('')
-  const [error, setError]     = useState('')
+  const navigate = useNavigate();
 
-const handleLogin = async (e) => {
-  e.preventDefault();
-  setError('');
+  const [tab, setTab] = useState("login");
 
-  try {
-    const res = await fetch("http://127.0.0.1:8000/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        phone,
-        password,
-      }),
-    });
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [location, setLocation] = useState("");
+  const [role, setRole] = useState("farmer");
 
-    const data = await res.json();
+  const [error, setError] = useState("");
 
-    if (!res.ok) {
-      setError(data.detail || "Login failed");
+  // 🔥 LOGIN
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const res = await fetch("http://localhost:8000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          phone,
+          password,
+          role,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.detail || "Login failed");
+        return;
+      }
+
+      localStorage.setItem("userId", data.user_id);
+      localStorage.setItem("username", data.name);
+      localStorage.setItem("phone", data.phone);
+      localStorage.setItem("location", data.location || "");
+      localStorage.setItem("email", data.email || "");
+      localStorage.setItem("profileImage", data.profile_image || "");
+      localStorage.setItem("role", data.role);
+
+      if (data.role === "farmer") {
+        navigate("/home");
+      } else {
+        navigate("/consumer");
+      }
+
+    } catch (err) {
+      console.log(err);
+      setError(err.message || "Server error");
+    }
+  };
+
+  // 🔥 REGISTER
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!name || !phone || !password || !location) {
+      setError("All fields are required");
       return;
     }
 
-    localStorage.setItem("userId", data.user_id);
-    localStorage.setItem("username", data.name);
-    localStorage.setItem("phone", data.phone);
-    localStorage.setItem("location", data.location || "");
-    localStorage.setItem("email", data.email || "");
-    localStorage.setItem("profileImage", data.profile_image || "");
+    try {
+      const res = await fetch("http://localhost:8000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
 
-    navigate("/home");
-  } catch (err) {
-    setError("Server error")
-  }
-};
+        body: JSON.stringify({
+          name,
+          phone,
+          password,
+          location,
+          role,
+        }),
+      });
 
- const handleRegister = async (e) => {
-  e.preventDefault();
-  setError('');
+      const data = await res.json();
 
-  if (!name || !phone || !password || !location) {
-    setError('All fields required da!');
-    return;
-  }
+      if (!res.ok) {
+        setError(data.detail || "Registration failed");
+        return;
+      }
 
-  try {
-    const res = await fetch("http://127.0.0.1:8000/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        phone,
-        password,
-        location,
-      }),
-    });
+      localStorage.setItem("userId", data.user_id);
+      localStorage.setItem("username", data.name);
+      localStorage.setItem("phone", data.phone);
+      localStorage.setItem("location", data.location || "");
+      localStorage.setItem("email", data.email || "");
+      localStorage.setItem("profileImage", data.profile_image || "");
+      localStorage.setItem("role", role);
 
-    const data = await res.json();
+      if (role === "farmer") {
+        navigate("/home");
+      } else {
+        navigate("/consumer");
+      }
 
-    if (!res.ok) {
-      setError(data.detail || "Registration failed");
-      return;
+    } catch (err) {
+      console.log(err);
+      setError(err.message || "Server error");
     }
-
-    localStorage.setItem("userId", data.user_id);
-    localStorage.setItem("username", data.name);
-    localStorage.setItem("phone", data.phone);
-    localStorage.setItem("location", data.location || "");
-    localStorage.setItem("email", data.email || "");
-    localStorage.setItem("profileImage", data.profile_image || "");
-
-    navigate("/home");
-  } catch (err) {
-    setError("Server error");
-  }
-};
+  };
 
   return (
     <div className="login-page">
-      {/* Left brand panel */}
+
+      {/* LEFT PANEL */}
       <div className="login-left">
+
         <div className="login-brand">
           <div className="brand-name">AgroPestro</div>
-          <div className="brand-tag">Smart Wheat Intelligence Platform</div>
+          <div className="brand-tag">
+            Smart Wheat Intelligence Platform
+          </div>
         </div>
 
         <div className="login-hero">
+
           <div className="hero-icon">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.8">
-              <path d="M12 22V12M12 12C12 12 7 7 7 3a5 5 0 0 1 10 0c0 4-5 9-5 9z"/>
-              <path d="M12 12C12 12 9 14 7 17"/>
-              <path d="M12 12C12 12 15 14 17 17"/>
-            </svg>
+            🌾
           </div>
-          <h1 className="hero-title">உங்கள் பயிரை<br />காப்போம்! 🌾</h1>
+
+          <h1 className="hero-title">
+            உங்கள் பயிரை
+            <br />
+            காப்போம்!
+          </h1>
+
           <p className="hero-desc">
             AI-powered disease detection, yield prediction,
-            and real-time farming advice — all in Tamil for Indian farmers.
+            and real-time farming advice.
           </p>
 
           <div className="feature-list">
-            {[
-              'Tamil Voice AI — கேள்வி கேட்டால் பதில் கிடைக்கும்',
-              'Disease Detection from crop photos instantly',
-              'Yield Prediction using soil & weather data',
-              'Market prices + best time to sell harvest',
-            ].map((f, i) => (
-              <div key={i} className="feature-item">
-                <div className="feature-tick">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                </div>
-                <span>{f}</span>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        <div className="farmer-quote">
-          <p>"AgroPestro என் பயிரில் நோய் வருவதற்கு முன்பே எனக்கு எச்சரிக்கை செய்தது!"</p>
-          <span>— Murugan, Wheat Farmer, Thanjavur</span>
+            <div className="feature-item">
+              <div className="feature-tick">✓</div>
+              <span>Disease Detection</span>
+            </div>
+
+            <div className="feature-item">
+              <div className="feature-tick">✓</div>
+              <span>Yield Prediction</span>
+            </div>
+
+            <div className="feature-item">
+              <div className="feature-tick">✓</div>
+              <span>Marketplace Support</span>
+            </div>
+
+          </div>
         </div>
       </div>
 
-      {/* Right form panel */}
+      {/* RIGHT PANEL */}
       <div className="login-right">
+
         <div className="login-form-box">
+
           <div className="form-top">
-            <h2>{tab === 'login' ? 'Welcome back 👋' : 'Create account 🌱'}</h2>
-            <p>{tab === 'login' ? 'Login to manage your farm dashboard' : 'Join AgroPestro for free'}</p>
+
+            <h2>
+              {tab === "login"
+                ? "Welcome back 👋"
+                : "Create account 🌱"}
+            </h2>
+
+            <p>
+              {tab === "login"
+                ? "Login to manage your farm dashboard"
+                : "Join AgroPestro for free"}
+            </p>
+
           </div>
 
-          {/* Tabs */}
+          {/* TABS */}
           <div className="auth-tabs">
-            <button className={`auth-tab ${tab === 'login' ? 'active' : ''}`} onClick={() => setTab('login')}>
+
+            <button
+              className={`auth-tab ${
+                tab === "login" ? "active" : ""
+              }`}
+              onClick={() => {
+                setTab("login");
+                setError("");
+              }}
+            >
               Login
             </button>
-            <button className={`auth-tab ${tab === 'register' ? 'active' : ''}`} onClick={() => setTab('register')}>
+
+            <button
+              className={`auth-tab ${
+                tab === "register" ? "active" : ""
+              }`}
+              onClick={() => {
+                setTab("register");
+                setError("");
+              }}
+            >
               Register
             </button>
+
           </div>
 
-          <form onSubmit={tab === 'login' ? handleLogin : handleRegister}>
-            {/* Name — register only */}
-            {tab === 'register' && (
+          <form
+            onSubmit={
+              tab === "login"
+                ? handleLogin
+                : handleRegister
+            }
+          >
+
+            {/* NAME */}
+            {tab === "register" && (
               <div className="form-group">
-                <label>Full Name</label>
+                <label>FULL NAME</label>
+
                 <div className="input-wrap">
-                  <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                  </svg>
                   <input
                     type="text"
-                    placeholder="உங்கள் பெயர்"
+                    placeholder="Enter name"
                     value={name}
-                    onChange={e => setName(e.target.value)}
+                    onChange={(e) =>
+                      setName(e.target.value)
+                    }
                   />
                 </div>
               </div>
             )}
 
-            {/* Phone */}
+            {/* PHONE */}
             <div className="form-group">
-              <label>Phone Number</label>
+
+              <label>PHONE NUMBER</label>
+
               <div className="input-wrap">
-                <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4a2 2 0 0 1 1.98-2.18h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6.13 6.13l.92-.92a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
-                </svg>
                 <input
                   type="text"
-                  placeholder="+91 98765 43210"
+                  placeholder="Enter phone number"
                   value={phone}
-                  onChange={e => setPhone(e.target.value)}
+                  onChange={(e) =>
+                    setPhone(e.target.value)
+                  }
                 />
               </div>
+
             </div>
 
-            {/* Password */}
+            {/* PASSWORD */}
             <div className="form-group">
-              <label>Password</label>
+
+              <label>PASSWORD</label>
+
               <div className="input-wrap">
-                <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
                 <input
                   type="password"
                   placeholder="Enter password"
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(e) =>
+                    setPassword(e.target.value)
+                  }
                 />
               </div>
+
             </div>
 
-            {/* Location — register only */}
-            {tab === 'register' && (
+            {/* LOCATION */}
+            {tab === "register" && (
               <div className="form-group">
-                <label>Location</label>
+
+                <label>LOCATION</label>
+
                 <div className="input-wrap">
-                  <svg className="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                    <circle cx="12" cy="10" r="3"/>
-                  </svg>
                   <input
                     type="text"
-                    placeholder="e.g. Madurai, Tamil Nadu"
+                    placeholder="Enter location"
                     value={location}
-                    onChange={e => setLocation(e.target.value)}
+                    onChange={(e) =>
+                      setLocation(e.target.value)
+                    }
                   />
                 </div>
+
               </div>
             )}
 
-            {error && <div className="form-error">{error}</div>}
+            {/* ROLE */}
+            <div className="form-group">
 
-            <button type="submit" className="btn-submit">
-              {tab === 'login' ? 'Login to AgroPestro' : 'Create Account'}
+              <label>ROLE</label>
+
+              <select
+                value={role}
+                onChange={(e) =>
+                  setRole(e.target.value)
+                }
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "10px",
+                  border: "1px solid #ccc",
+                }}
+              >
+                <option value="farmer">
+                  Farmer
+                </option>
+
+                <option value="consumer">
+                  Consumer
+                </option>
+
+              </select>
+            </div>
+
+            {/* ERROR */}
+            {error && (
+              <div className="form-error">
+                {error}
+              </div>
+            )}
+
+            {/* BUTTON */}
+            <button
+              className="btn-submit"
+              type="submit"
+            >
+              {tab === "login"
+                ? "Login to AgroPestro"
+                : "Create Account"}
             </button>
+
           </form>
 
-          {/* Lang toggle */}
-          <div className="lang-row">
-            <span>Language:</span>
-            <button className="lang-btn active">தமிழ்</button>
-            <button className="lang-btn">English</button>
-          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

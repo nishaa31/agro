@@ -20,6 +20,7 @@ import {
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import Sidebar from "../components/Sidebar";
 
 export default function Home() {
   const [search, setSearch] = useState("");
@@ -239,7 +240,21 @@ const [activeTab, setActiveTab] =
 };
 
   return (
-    <div className="min-h-screen bg-[#f4f7f2] p-6">
+    <div className="flex">
+
+    <Sidebar />
+
+    <div
+  className="
+    min-h-screen
+    bg-[#f4f7f2]
+    p-6
+    ml-[100px]
+    w-full
+    transition-all
+    duration-300
+  "
+>
       {/* TOPBAR */}
       <div className="flex flex-col gap-4 rounded-[28px] bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         {/* LEFT */}
@@ -366,6 +381,7 @@ const [activeTab, setActiveTab] =
           </div>
         </div>
       </div>
+      
 
       {/* HERO SECTION */}
       <div className="mt-6 grid gap-6 rounded-[35px] bg-white p-6 shadow-sm lg:grid-cols-2">
@@ -931,5 +947,6 @@ onChange={(e) =>
   </div>
 )}
     </div>
+  </div>
   );
 }

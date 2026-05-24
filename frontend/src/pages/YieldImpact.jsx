@@ -11,6 +11,7 @@ import {
   Leaf,
   Sparkles,
 } from "lucide-react";
+import Sidebar from "../components/Sidebar";
 
 const YieldImpact = () => {
   const [form, setForm] = useState({
@@ -113,7 +114,10 @@ const YieldImpact = () => {
     : riskStyle("");
 
   return (
-    <div className="min-h-screen bg-[#f4f7f2] p-6">
+    <div className="flex">
+      <Sidebar />
+      <div className="flex-1 min-h-screen bg-[#f4f7f2] p-6 overflow-auto">
+      <div className="w-full">
       {/* HEADER */}
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -462,6 +466,8 @@ const YieldImpact = () => {
           )}
         </div>
       </div>
+    </div>
+    </div>
     </div>
   );
 };

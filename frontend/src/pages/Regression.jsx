@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "../services/api";
+import Sidebar from "../components/Sidebar";
 
 function Regression() {
   const [formData, setFormData] = useState({
@@ -54,7 +55,15 @@ function Regression() {
   };
 
   return (
-    <div style={{ paddingLeft: "260px", padding: "40px" }}>
+  
+  <div className="flex w-full min-h-screen bg-[#eef3f8]">
+
+      <Sidebar />
+
+      <div className="flex-1 min-h-screen bg-[#f4f7f2] p-6 overflow-auto">
+      <div className="w-full">
+
+      <div style={{ paddingLeft: "260px", padding: "40px" }}>
       
       {/* PAGE CARD */}
       <div
@@ -155,6 +164,9 @@ function Regression() {
         )}
       </div>
     </div>
+  </div>
+  </div>
+  </div>  
   );
 }
 

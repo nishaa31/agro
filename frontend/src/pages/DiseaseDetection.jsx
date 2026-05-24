@@ -9,6 +9,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import Sidebar from "../components/Sidebar";
 
 const DiseaseDetection = () => {
   const [preview, setPreview] = useState(null);
@@ -80,7 +81,13 @@ const DiseaseDetection = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f7f2] p-6">
+
+    <div className="flex w-full min-h-screen bg-[#eef3f8]">
+
+      <Sidebar />
+
+      <div className="flex-1 min-h-screen bg-[#f4f7f2] p-6 overflow-auto">
+      <div className="w-full">
       {/* HEADER */}
       <div className="mb-8 flex items-center justify-between">
         <div>
@@ -455,6 +462,8 @@ const DiseaseDetection = () => {
           )}
         </div>
       </div>
+      </div>
+    </div>
     </div>
   );
 };

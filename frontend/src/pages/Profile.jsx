@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Sidebar from "../components/Sidebar";
 
 function Profile() {
   const [profile, setProfile] = useState(null);
@@ -24,6 +25,8 @@ function Profile() {
   };
 
   return (
+    <div className="flex">
+      <Sidebar />
     <div style={{
       minHeight: "100vh",
       background: "linear-gradient(135deg, #e6f0ff, #f5f7fa)",
@@ -125,6 +128,7 @@ function Profile() {
         )}
       </div>
 
+    </div>
     </div>
   );
 }
